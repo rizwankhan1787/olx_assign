@@ -1,3 +1,3 @@
-data "template_file" "installapache" {
-  template = "${file("${path.module}/installapache.tpl")}"
+data "template_file" "installnginx" {
+  template = "${file("${path.module}/installnginx.tpl")}"
 }
