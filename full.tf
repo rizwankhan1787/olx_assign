@@ -184,7 +184,7 @@ resource "aws_security_group" "terra_bastion_sg" {
 
 resource "aws_launch_configuration" "terra_bastion_lc" {
   name_prefix   = "terraform-bastion-"
-  image_id      = "ami-01e24be29428c15b2"
+  image_id      = "ami-06f2f779464715dc5"
   instance_type = "t2.micro"
   key_name      = "${var.key_name}"
   security_groups = ["${aws_security_group.terra_bastion_sg.id}"]
@@ -386,7 +386,7 @@ resource "aws_route_table_association" "app_route_table_assoc_az_2" {
 
 resource "aws_launch_configuration" "terra_lc" {
   name_prefix   = "terraform-lc-example-"
-  image_id      = "ami-01e24be29428c15b2"
+  image_id      = "ami-06f2f779464715dc5"
   instance_type = "t2.micro"
   key_name      = "${var.key_name}"
   security_groups = ["${aws_security_group.terra_app_server_sg.id}"]
@@ -438,3 +438,4 @@ resource "aws_autoscaling_group" "terra-app-asg_az_2" {
     "aws_alb_target_group.terra_alb_target_group"
   ]
 }
+
