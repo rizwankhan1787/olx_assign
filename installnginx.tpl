@@ -9,5 +9,6 @@ sudo git clone https://github.com/rizwankhan1787/olx_assign.git playbook/terrafo
 sudo curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py";
 sudo python get-pip.py;
 sudo pip install awscli;
+sudo apt-get install nginx -y;
 sudo /usr/bin/ansible-playbook -i playbook/terraform-ansible/ansible/hosts playbook/terraform-ansible/ansible/web.yml;
 sudo /usr/bin/ansible-playbook -i /tmp/terraform-ansible/ansible/hosts /tmp/terraform-ansible/ansible/web.yml;
