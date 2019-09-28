@@ -1,10 +1,5 @@
 ---
 
-- name: Install Nginx and things.
-  apt: name={{ item }} state=present
-  with_items:
-   - nginx
-
 - name: Starting the nginx service.
   service: name=nginx state=started enabled=yes
 

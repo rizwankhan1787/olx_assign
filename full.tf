@@ -191,7 +191,7 @@ resource "aws_security_group" "terra_bastion_sg" {
 
 resource "aws_launch_configuration" "terra_bastion_lc" {
   name          = "rizwan-bastion"
-  image_id      = "ami-06f2f779464715dc5"
+  image_id      = "ami-07d0cf3af28718ef8"
   instance_type = "t2.micro"
   key_name      = "${var.key_name}"
   security_groups = ["${aws_security_group.terra_bastion_sg.id}"]
@@ -404,7 +404,7 @@ data "aws_ami" "nginx-ubuntu" {
     values = ["hvm"]
   }
 
-  owners = ["524424293057"] # Canonical
+  owners = ["060948813048"] # Canonical
 }
 
 resource "aws_launch_configuration" "terra_lc" {

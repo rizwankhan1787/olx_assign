@@ -30,7 +30,7 @@ variable "private_subnet_az_2_rizz" {
 
 variable "key_name" {
   description = "key name"
-  default = "arfa"
+  default = "umarfa"
 }
 
 variable "az_count" {
