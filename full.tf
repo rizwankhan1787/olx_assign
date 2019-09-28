@@ -15,14 +15,14 @@ resource "aws_vpc" "rizz_vpc" {
   instance_tenancy = "default"
 
   tags = {
-    Name = "main"
+    Name = "rizwan_vpc"
   }
 }
 
 resource "aws_subnet" "terra_ingress_subnet_az_1" {
   vpc_id     = "${aws_vpc.rizz_vpc.id}"
   cidr_block        = "${var.ingress_subnet_az_1_CIDR}"
-  availability_zone = "us-west-2a"
+  availability_zone = "us-east-1a"
   map_public_ip_on_launch = "true"
 
   tags = {
@@ -37,7 +37,7 @@ resource "aws_subnet" "terra_ingress_subnet_az_1" {
 resource "aws_subnet" "terra_ingress_subnet_az_2" {
   vpc_id     = "${aws_vpc.rizz_vpc.id}"
   cidr_block        = "${var.ingress_subnet_az_2_CIDR}"
-  availability_zone = "us-west-2b"
+  availability_zone = "us-east-1b"
   map_public_ip_on_launch = "true"
 
   tags = {
@@ -52,7 +52,7 @@ resource "aws_subnet" "terra_ingress_subnet_az_2" {
 resource "aws_subnet" "terra_private_subnet_az_1" {
   vpc_id     = "${aws_vpc.rizz_vpc.id}"
   cidr_block        = "${var.private_subnet_az_1_CIDR}"
-  availability_zone = "us-west-2a"
+  availability_zone = "us-east-1a"
 
   tags = {
     Name = "Application Subnet 1"
@@ -66,7 +66,7 @@ resource "aws_subnet" "terra_private_subnet_az_1" {
 resource "aws_subnet" "terra_private_subnet_az_2" {
   vpc_id     = "${aws_vpc.rizz_vpc.id}"
   cidr_block        = "${var.private_subnet_az_2_CIDR}"
-  availability_zone = "us-west-2b"
+  availability_zone = "us-east-1b"
 
   tags = {
     Name = "Application Subnet 2"
@@ -77,14 +77,21 @@ resource "aws_subnet" "terra_private_subnet_az_2" {
   ]
 }
 
-resource "aws_security_group" "garrett_terra_alb_sg" {
-  name        = "garrett_terra_alb_sg"
+resource "aws_security_group" "rizwan_terra_alb_sg" {
+  name        = "rizwan_terra_alb_sg"
   description = "Allow all inbound traffic"
   vpc_id     = "${aws_vpc.rizz_vpc.id}"
 
   ingress {
     from_port   = 80
     to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -104,7 +111,7 @@ resource "aws_security_group" "garrett_terra_alb_sg" {
   }
 
   tags = {
-    Name = "garrett_terra_alb_sg"
+    Name = "rizwan_terra_alb_sg"
   }
 
   depends_on = [
@@ -137,7 +144,7 @@ resource "aws_security_group" "terra_app_server_sg" {
     protocol    = "tcp"
     cidr_blocks = ["${var.ingress_subnet_az_1_CIDR}"]
   }
-
+ 
   tags = {
     Name = "terra_app_server_sg"
   }
@@ -183,7 +190,7 @@ resource "aws_security_group" "terra_bastion_sg" {
 }
 
 resource "aws_launch_configuration" "terra_bastion_lc" {
-  name_prefix   = "terraform-bastion-"
+  name          = "rizwan-bastion"
   image_id      = "ami-06f2f779464715dc5"
   instance_type = "t2.micro"
   key_name      = "${var.key_name}"
@@ -192,7 +199,7 @@ resource "aws_launch_configuration" "terra_bastion_lc" {
   lifecycle {
     create_before_destroy = true
   }
-
+ 
   depends_on = [
     "aws_security_group.terra_bastion_sg"
   ]
@@ -215,8 +222,8 @@ resource "aws_autoscaling_group" "terra-bastion" {
   ]
 }
 
-resource "aws_alb_target_group" "terra_alb_target_group" {
-  name     = "garrett-terra-alb-target-group"
+resource "aws_alb_target_group" "terra_alb_target_group_1" {
+  name     = "rizwan-terra-alb-target-group"
   port     = 80
   protocol = "HTTP"
   vpc_id   = "${aws_vpc.rizz_vpc.id}"
@@ -227,10 +234,10 @@ resource "aws_alb_target_group" "terra_alb_target_group" {
 }
 
 resource "aws_alb" "terra_alb" {
-  name               = "garretts-terra-alb"
+  name               = "rizwan-terra-alb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = ["${aws_security_group.garrett_terra_alb_sg.id}"]
+  security_groups    = ["${aws_security_group.rizwan_terra_alb_sg.id}"]
   subnets            = ["${aws_subnet.terra_ingress_subnet_az_1.id}","${aws_subnet.terra_ingress_subnet_az_2.id}"]
 
   enable_deletion_protection = false
@@ -240,7 +247,7 @@ resource "aws_alb" "terra_alb" {
   }
 
   depends_on = [
-    "aws_security_group.garrett_terra_alb_sg",
+    "aws_security_group.rizwan_terra_alb_sg",
     "aws_subnet.terra_ingress_subnet_az_1",
     "aws_subnet.terra_ingress_subnet_az_2"
   ]
@@ -252,13 +259,13 @@ resource "aws_alb_listener" "terra_alb_listener" {
   protocol          = "HTTP"
 
   default_action {
-    target_group_arn = "${aws_alb_target_group.terra_alb_target_group.id}"
+    target_group_arn = "${aws_alb_target_group.terra_alb_target_group_1.id}"
     type             = "forward"
   }
 
   depends_on = [
     "aws_alb.terra_alb",
-    "aws_alb_target_group.terra_alb_target_group"
+    "aws_alb_target_group.terra_alb_target_group_1"
   ]
 }
 
@@ -384,9 +391,25 @@ resource "aws_route_table_association" "app_route_table_assoc_az_2" {
   ]
 }
 
+data "aws_ami" "nginx-ubuntu" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["nginx-ubuntu"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  owners = ["524424293057"] # Canonical
+}
+
 resource "aws_launch_configuration" "terra_lc" {
-  name_prefix   = "terraform-lc-example-"
-  image_id      = "ami-06f2f779464715dc5"
+  name   = "rizwan-private"
+  image_id      = "${data.aws_ami.nginx-ubuntu.id}"
   instance_type = "t2.micro"
   key_name      = "${var.key_name}"
   security_groups = ["${aws_security_group.terra_app_server_sg.id}"]
@@ -407,7 +430,7 @@ resource "aws_autoscaling_group" "terra-app-asg_az_1" {
   min_size             = 1
   max_size             = 2
   vpc_zone_identifier       = ["${aws_subnet.terra_private_subnet_az_1.id}"]
-  target_group_arns         = ["${aws_alb_target_group.terra_alb_target_group.id}"]
+  target_group_arns         = ["${aws_alb_target_group.terra_alb_target_group_1.id}"]
 
   lifecycle {
     create_before_destroy = true
@@ -416,7 +439,7 @@ resource "aws_autoscaling_group" "terra-app-asg_az_1" {
   depends_on = [
     "aws_launch_configuration.terra_lc",
     "aws_subnet.terra_private_subnet_az_1",
-    "aws_alb_target_group.terra_alb_target_group"
+    "aws_alb_target_group.terra_alb_target_group_1"
   ]
 }
 
@@ -426,16 +449,15 @@ resource "aws_autoscaling_group" "terra-app-asg_az_2" {
   min_size             = 1
   max_size             = 2
   vpc_zone_identifier       = ["${aws_subnet.terra_private_subnet_az_2.id}"]
-  target_group_arns         = ["${aws_alb_target_group.terra_alb_target_group.id}"]
+  target_group_arns         = ["${aws_alb_target_group.terra_alb_target_group_1.id}"]
 
   lifecycle {
     create_before_destroy = true
   }
-
+ 
   depends_on = [
     "aws_launch_configuration.terra_lc",
     "aws_subnet.terra_private_subnet_az_2",
-    "aws_alb_target_group.terra_alb_target_group"
+    "aws_alb_target_group.terra_alb_target_group_1"
   ]
 }
-
