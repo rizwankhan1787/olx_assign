@@ -17,4 +17,4 @@ Below is the ALB arn link to access web application
 
 http://rizwan-terra-alb-2065520432.us-east-1.elb.amazonaws.com
 
-https://rizwan-terra-alb-2065520432.us-east-1.elb.amazonaws.com
+https://rizwan-terra-alb-2065520432.us-east-1.elb.amazonaws.com ----To create certificate we need to create domain in route53 and create record sets and CNAME.
